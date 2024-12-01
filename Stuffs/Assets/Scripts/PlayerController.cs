@@ -5,22 +5,25 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 5f;
-    public float jumpSpeed = 8f;
+    [SerializeField]private float speed;
+    [SerializeField]private float jumpSpeed;
     private float direction = 0f;
     private Rigidbody2D player;
     public Animator anim;
     private String currentState;
-
     public Transform groundCheck;
     public float groundCheckRadius;
     public LayerMask groundLayer;
     private bool isTouchingGround;
+    private bool facingRight;
+    private bool stateFreeze;
+    private float currentSpeed;
 
     // Start is called before the first frame update
     void Start()
     {
         player = GetComponent<Rigidbody2D>();
+        currentSpeed = speed;
     }
 
     // Update is called once per frame
@@ -31,10 +34,12 @@ public class PlayerController : MonoBehaviour
 
         if (direction > 0f)
         {
-            player.velocity = new Vector2(direction * speed, player.velocity.y);
+            facingRight = false;
+            player.velocity = new Vector2(direction * currentSpeed, player.velocity.y);
         }
         else if (direction < 0f){
-            player.velocity = new Vector2(direction * speed, player.velocity.y);
+            facingRight = true;
+            player.velocity = new Vector2(direction * currentSpeed, player.velocity.y);
         }
         else
         {
@@ -48,34 +53,50 @@ public class PlayerController : MonoBehaviour
 
         if(player.velocity.y > 0)
         {
-            ChangeState("HeroKnight_Jump");
+            StartCoroutine (ChangeState("HeroKnight_Jump", false, 0));
         }
         else if (player.velocity.y < 0)
         {
-            ChangeState("HeroKnight_Fall");
+            StartCoroutine (ChangeState("HeroKnight_Fall", false, 0));
         }
 
         if((player.velocity.x >= 0.1f || player.velocity.x <= -0.1f) && player.velocity.y == 0)
         {
             
-            ChangeState("HeroKnight_Run");
+            StartCoroutine (ChangeState("HeroKnight_Run", false, 0));
         }
         else if(player.velocity.y == 0)
         {
-            ChangeState("HeroKnight_Idle");
+            StartCoroutine (ChangeState("HeroKnight_Idle", false, 0));
         }
 
         SpriteRenderer SpriteCranberry;
             SpriteCranberry = GetComponent<SpriteRenderer>();
-            SpriteCranberry.flipX = player.velocity.x < 0;
+            SpriteCranberry.flipX = facingRight;
     }
 
-    private void ChangeState(String newState)
+    public IEnumerator ChangeState(String newState, bool disable, float duration)
     {
-        if(currentState != newState)
+        if (currentState != newState && stateFreeze == false)
         {
+            if (disable == true)
+            {
+                stateFreeze = true;
+            }
             currentState = newState;
             anim.Play(newState);
         }
+
+        if (disable == true)
+        {
+            yield return new WaitForSeconds (duration);
+            stateFreeze = false;
+        }
+    }
+    public IEnumerator stopPlayer(float duration)
+    {
+        currentSpeed = speed / 4;
+        yield return new WaitForSeconds(duration);
+        currentSpeed = speed;
     }
 }
