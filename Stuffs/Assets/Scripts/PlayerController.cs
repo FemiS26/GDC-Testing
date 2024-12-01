@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,6 +10,7 @@ public class PlayerController : MonoBehaviour
     private float direction = 0f;
     private Rigidbody2D player;
     public Animator anim;
+    private String currentState;
 
     public Transform groundCheck;
     public float groundCheckRadius;
@@ -39,35 +41,41 @@ public class PlayerController : MonoBehaviour
             player.velocity = new Vector2(0, player.velocity.y);
         }
 
-        if(Input.GetButtonDown("Jump") && isTouchingGround)
+        if(Input.GetButton("Jump") && isTouchingGround)
         {
             player.velocity = new Vector2(player.velocity.x, jumpSpeed);
         }
 
-        if(player.velocity.x >= 0.1f || player.velocity.x <= -0.1f)
+        if(player.velocity.y > 0)
         {
-            Debug.Log("fuck you");
-            anim.SetBool("isRunning", true);
+            ChangeState("HeroKnight_Jump");
         }
-        else
+        else if (player.velocity.y < 0)
         {
-            anim.SetBool("isRunning", false);
-        }
-
-        private void OnCollisionEnter2D(Collision2D other)
-        {
-            if(other.gameObject.CompareTag("Ground"))
-            {
-                anim.SetBool("isJumping", false);
-            }
+            ChangeState("HeroKnight_Fall");
         }
 
-        private void OnCollisionExit2D(Collision2D other)
+        if((player.velocity.x >= 0.1f || player.velocity.x <= -0.1f) && player.velocity.y == 0)
         {
-            if(other.gameObject.CompareTag("Ground"))
-            {
-                anim.SetBool("isJumping", true);
-            }
+            
+            ChangeState("HeroKnight_Run");
+        }
+        else if(player.velocity.y == 0)
+        {
+            ChangeState("HeroKnight_Idle");
+        }
+
+        SpriteRenderer SpriteCranberry;
+            SpriteCranberry = GetComponent<SpriteRenderer>();
+            SpriteCranberry.flipX = player.velocity.x < 0;
+    }
+
+    private void ChangeState(String newState)
+    {
+        if(currentState != newState)
+        {
+            currentState = newState;
+            anim.Play(newState);
         }
     }
 }
